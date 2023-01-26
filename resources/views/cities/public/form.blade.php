@@ -1,6 +1,6 @@
 
 
-		 {!! Form::open(array('url'=>'cities', 'class'=>'form-horizontal','files' => true , 'parsley-validate'=>'','novalidate'=>' ')) !!}
+		 {!! Form::open(array('url'=>'cities/savepublic', 'class'=>'form-horizontal','files' => true , 'parsley-validate'=>'','novalidate'=>' ')) !!}
 
 	@if(Session::has('messagetext'))
 	  
@@ -40,12 +40,12 @@
 				  <div class="form-group">
 					<label class="col-sm-4 text-right">&nbsp;</label>
 					<div class="col-sm-8">	
-					<button type="submit" name="apply" class="btn btn-default btn-sm" ><i class="fa  fa-check-circle"></i> {{ Lang::get('core.sb_apply') }}</button>
-					<button type="submit" name="submit" class="btn btn-default btn-sm" ><i class="fa  fa-save "></i> {{ Lang::get('core.sb_save') }}</button>
+					<button type="submit" name="apply" class="btn btn-info btn-sm" ><i class="fa  fa-check-circle"></i> {{ Lang::get('core.sb_apply') }}</button>
+					<button type="submit" name="submit" class="btn btn-primary btn-sm" ><i class="fa  fa-save "></i> {{ Lang::get('core.sb_save') }}</button>
 				  </div>	  
 			
 		</div> 
-		 <input type="hidden" name="action_task" value="public" />
+		 
 		 {!! Form::close() !!}
 		 
    <script type="text/javascript">

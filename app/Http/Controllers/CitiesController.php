@@ -5,45 +5,46 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator as Paginator;
 use Validator, Input, Redirect ; 
 
-
 class CitiesController extends Controller {
 
 	protected $layout = "layouts.main";
 	protected $data = array();	
 	public $module = 'cities';
 	static $per_page	= '10';
-
-	public function __construct()
-	{		
+	
+	public function __construct() 
+	{
 		parent::__construct();
-		$this->model = new Cities();	
+		$this->model = new Cities();
 		
-		$this->info = $this->model->makeInfo( $this->module);	
+		$this->info = $this->model->makeInfo( $this->module);
+		$this->access = array();
+	
 		$this->data = array(
-			'pageTitle'	=> 	$this->info['title'],
-			'pageNote'	=>  $this->info['note'],
-			'pageModule'=> 'cities',
-			'return'	=> self::returnUrl()
-		);
-		
-	}
-
-	public function index( Request $request )
+			'pageTitle'			=> 	$this->info['title'],
+			'pageNote'			=>  $this->info['note'],
+			'pageModule'		=> 'cities',
+			'pageUrl'			=>  url('cities'),
+			'return' 			=> 	self::returnUrl()	
+		);		
+				
+	} 
+	
+	public function index()
 	{
-		// Make Sure users Logged 
 		if(!\Auth::check()) 
-			return redirect('user/login')->with('status', 'error')->with('message','You are not login');
+			return redirect('user/login')->with('msgstatus', 'error')->with('messagetext','You are not login');
 
-		
-		$this->grab( $request) ;
+		$this->access = $this->model->validAccess($this->info['id'] , session('gid'));
 		if($this->access['is_view'] ==0) 
-			return redirect('dashboard')->with('message', __('core.note_restric'))->with('status','error');				
-		// Render into template
-		return view( $this->module.'.index',$this->data);
-	}	
-
-	function create( Request $request , $id =0 ) 
+			return redirect('dashboard')->with('messagetext',\Lang::get('core.note_restric'))->with('msgstatus','error');
+				
+		$this->data['access']		= $this->access;			
+		return view($this->module.'.index',$this->data);
+	}
+	function create( Request $request ) 
 	{
+		$id = 0;
 		$this->hook( $request  );
 		if($this->access['is_add'] ==0) 
 			return redirect('dashboard')->with('message', __('core.note_restric'))->with('status','error');
@@ -51,8 +52,9 @@ class CitiesController extends Controller {
 		$this->data['row'] = $this->model->getColumnTable( $this->info['table']); 
 		
 		$this->data['id'] = '';
+		$this->data['setting'] 		= $this->info['setting']; 
 		return view($this->module.'.form',$this->data);
-	}
+	}		
 	function edit( Request $request , $id ) 
 	{
 		$this->hook( $request , $id );
@@ -60,23 +62,30 @@ class CitiesController extends Controller {
 			return redirect($this->module)->with('message','Record Not Found !')->with('status','error');
 		if($this->access['is_edit'] ==0 )
 			return redirect('dashboard')->with('message',__('core.note_restric'))->with('status','error');
+
 		$this->data['row'] = (array) $this->data['row'];
 		
 		$this->data['id'] = $id;
 		return view($this->module.'.form',$this->data);
-	}	
+	}
 	function show( Request $request , $id ) 
 	{
 		/* Handle import , export and view */
 		$task =$id ;
 		switch( $task)
 		{
-			case 'search':
-				return $this->getSearch();
+			case 'data':
+				$this->grab( $request) ;
+				return view( $this->module.'.table',$this->data);
 				break;
+			case 'search':
+				return $this->getSearch();	
+				break;
+							
 			case 'lookup':
 				return $this->getLookup($request );
-				break;
+				break;				
+
 			case 'comboselect':
 				return $this->getComboselect( $request );
 				break;
@@ -97,7 +106,8 @@ class CitiesController extends Controller {
 				return view($this->module.'.view',$this->data);	
 				break;		
 		}
-	}
+	}	
+
 	function store( Request $request  )
 	{
 		$task = $request->input('action_task');
@@ -113,31 +123,24 @@ class CitiesController extends Controller {
 					
 					/* Insert logs */
 					$this->model->logs($request , $id);
-					if($request->has('apply'))
-						return redirect( $this->module .'/'.$id.'/edit?'. $this->returnUrl() )->with('message',__('core.note_success'))->with('status','success');
+					
+					return response()->json(array(
+						'status'=>'success',
+						'message'=> __('core.note_success')
+						));	
+					
+				} else {
 
-					return redirect( $this->module .'?'. $this->returnUrl() )->with('message',__('core.note_success'))->with('status','success');
-				} 
-				else {
-					if( $request->input(  $this->info['key'] ) =='') {
-						$url = $this->module.'/create?'. $this->returnUrl();
-					} else {
-						$url = $this->module .'/'.$id.'/edit?'. $this->returnUrl();
-					}
-					return redirect( $url )
-							->with('message',__('core.note_error'))->with('status','error')
-							->withErrors($validator)->withInput();
-								
-
+					$message = $this->validateListError(  $validator->getMessageBag()->toArray() );
+					return response()->json(array(
+						'message'	=> $message,
+						'status'	=> 'error'
+					));	
 				}
 				break;
-			case 'public':
-				return $this->store_public( $request );
-				break;
-
 			case 'delete':
 				$result = $this->destroy( $request );
-				return redirect($this->module.'?'.$this->returnUrl())->with($result);
+				return response()->json($result);
 				break;
 
 			case 'import':
@@ -146,11 +149,12 @@ class CitiesController extends Controller {
 
 			case 'copy':
 				$result = $this->copy( $request );
-				return redirect($this->module.'?'.$this->returnUrl())->with($result);
+				return response()->json($result);
 				break;		
 		}	
 	
 	}	
+
 
 	public function destroy( $request)
 	{
@@ -163,10 +167,10 @@ class CitiesController extends Controller {
 			return redirect('dashboard')
 				->with('message', __('core.note_restric'))->with('status','error');
 		// delete multipe rows 
-		if(is_array($request->input('ids')))
+		if(count($request->input('ids')) >=1)
 		{
 			$this->model->destroy($request->input('ids'));
-			
+		//	
 			\SiteHelpers::auditTrail( $request , "ID : ".implode(",",$request->input('ids'))."  , Has Been Removed Successfull");
 			// redirect
         	return ['message'=>__('core.note_success_delete'),'status'=>'success'];	
@@ -175,69 +179,6 @@ class CitiesController extends Controller {
 			return ['message'=>__('No Item Deleted'),'status'=>'error'];				
 		}
 
-	}	
-	
-	public static function display(  )
-	{
-		$mode  = isset($_GET['view']) ? 'view' : 'default' ;
-		$model  = new Cities();
-		$info = $model::makeInfo('cities');
-		$data = array(
-			'pageTitle'	=> 	$info['title'],
-			'pageNote'	=>  $info['note']			
-		);	
-		if($mode == 'view')
-		{
-			$id = $_GET['view'];
-			$row = $model::getRow($id);
-			if($row)
-			{
-				$data['row'] =  $row;
-				$data['fields'] 		=  \SiteHelpers::fieldLang($info['config']['grid']);
-				$data['id'] = $id;
-				return view('cities.public.view',$data);			
-			}			
-		} 
-		else {
+	}		
 
-			$page = isset($_GET['page']) ? $_GET['page'] : 1;
-			$params = array(
-				'page'		=> $page ,
-				'limit'		=>  (isset($_GET['rows']) ? filter_var($_GET['rows'],FILTER_VALIDATE_INT) : 10 ) ,
-				'sort'		=> $info['key'] ,
-				'order'		=> 'asc',
-				'params'	=> '',
-				'global'	=> 1 
-			);
-
-			$result = $model::getRows( $params );
-			$data['tableGrid'] 	= $info['config']['grid'];
-			$data['rowData'] 	= $result['rows'];	
-
-			$page = $page >= 1 && filter_var($page, FILTER_VALIDATE_INT) !== false ? $page : 1;	
-			$pagination = new Paginator($result['rows'], $result['total'], $params['limit']);	
-			$pagination->setPath('');
-			$data['i']			= ($page * $params['limit'])- $params['limit']; 
-			$data['pagination'] = $pagination;
-			return view('cities.public.index',$data);	
-		}
-
-	}
-	function store_public( $request)
-	{
-		
-		$rules = $this->validateForm();
-		$validator = Validator::make($request->all(), $rules);	
-		if ($validator->passes()) {
-			$data = $this->validatePost(  $request );		
-			 $this->model->insertRow($data , $request->input('id'));
-			return  Redirect::back()->with('message',__('core.note_success'))->with('status','success');
-		} else {
-
-			return  Redirect::back()->with('message',__('core.note_error'))->with('status','error')
-			->withErrors($validator)->withInput();
-
-		}	
-	
-	}
 }
