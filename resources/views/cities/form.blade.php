@@ -1,27 +1,40 @@
-@if($setting['form-method'] =='native')
+@extends('layouts.app')
+
+@section('content')
+<div class="page-titles">
+  <h2> {{ $pageTitle }} <small> {{ $pageNote }} </small></h2>
+</div>
 <div class="card">
 	<div class="card-body">
-@endif
-		<div class="form-ajax-box">
-		{!! Form::open(array('url'=>'cities?return='.$return, 'class'=>'form-horizontal  sximo-form validated','files' => true , 'parsley-validate'=>'','novalidate'=>' ','id'=> 'citiesFormAjax')) !!}
 
-		<div class="toolbar-nav">	
-			<div class="row">	
-					
-				<div class="col-md-6 ">
-					<a href="javascript://ajax" onclick="ajaxViewClose('#{{ $pageModule }}')" class="tips btn btn-sm  btn-danger" title="{{ __('core.btn_back') }}" ><i class="fa  fa-times"></i></a>			
-				</div>
-				<div class="col-sm-6 text-right">	
-					<div class="btn-group">
-						<button type="submit" class="btn btn-sm btn-primary  " name="apply">{{ Lang::get('core.sb_apply') }} </button>
-						<button type="submit" class="btn btn-sm btn-success " name="save">  {{ Lang::get('core.sb_save') }} </button>
-					</div>	
-				</div>
-						
+
+	{!! Form::open(array('url'=>'cities?return='.$return, 'class'=>'form-horizontal  validated sximo-form','files' => true ,'id'=> 'FormTable' )) !!}
+	<div class="toolbar-nav">
+		<div class="row">
+			<div class="col-md-6 " >
+				 <a href="{{ url($pageModule.'?return='.$return) }}" class="tips btn btn-danger  btn-sm "  title="{{ __('core.btn_back') }}" ><i class="fa  fa-times"></i></a>
 			</div>
-		</div>	
+			<div class="col-md-6  text-right " >
+				<div class="btn-group">
+					
+						<button name="apply" class="tips btn btn-sm btn-info  "  title="{{ __('core.btn_back') }}" > {{ __('core.sb_apply') }} </button>
+						<button name="save" class="tips btn btn-sm btn-primary "  id="saved-button" title="{{ __('core.btn_back') }}" > {{ __('core.sb_save') }} </button> 
+						
+					
+				</div>		
+			</div>
+			
+		</div>
+	</div>	
 
 
+	
+	<ul class="parsley-error-list">
+		@foreach($errors->all() as $error)
+			<li>{{ $error }}</li>
+		@endforeach
+	</ul>		
+	<div class="">
 		<div class="col-md-12">
 						<fieldset><legend> cities</legend>
 				{!! Form::hidden('id', $row['id']) !!}					
@@ -40,60 +53,30 @@
 						     class='form-control form-control-sm ' /> 
 										 </div> 
 										 
-									  </div> </fieldset></div>									
-							
-		<input type="hidden" name="action_task" value="save" />
-
-		{!! Form::close() !!}
-		</div>
-@if($setting['form-method'] =='native')
+									  </div> </fieldset></div>
 
 	</div>
+	
+	<input type="hidden" name="action_task" value="save" />
+	{!! Form::close() !!}
+	</div>
 </div>
-@endif
-@include('sximo.module.template.ajax.formjavascript')
-
-
-<script type="text/javascript">
-$(document).ready(function() { 
-	 
-	
-	 	
-	 
-	
-	var form = $('#citiesFormAjax'); 
-	form.parsley();
-	form.submit(function(){
+		 
+   <script type="text/javascript">
+	$(document).ready(function() { 
 		
-		if(form.parsley().isValid()){			
-			var options = { 
-				dataType:      'json', 
-				beforeSubmit :  function() {
-				},
-				success		:   function(data) {
+		
+		 	
+		 	 
 
-					if(data.status == 'success')
-					{
-						ajaxViewClose('#{{ $pageModule }}');
-						ajaxFilter('#{{ $pageModule }}','{{ $pageUrl }}/data');
-						notyMessage(data.message);	
-						$('#sximo-modal').modal('hide');	
-					} else {
-						notyMessageError(data.message);	
-						return false;
-					}	
-
-				}  
-			}  
-			$(this).ajaxSubmit(options); 
+		$('.removeMultiFiles').on('click',function(){
+			var removeUrl = '{{ url("cities/removefiles?file=")}}'+$(this).attr('url');
+			$(this).parent().remove();
+			$.get(removeUrl,function(response){});
+			$(this).parent('div').empty();	
 			return false;
-						
-		} else {
-			return false;
-		}		
-	
+		});		
+		
 	});
-
-});
-
-</script>		 
+	</script>		 
+@stop

@@ -1,11 +1,11 @@
-<div class="container" style="padding-top:25px;">	
+<div class="container" class="pt-3 pb-3">	
     <div class="row m-b-lg animated fadeInDown delayp1 text-center">
         <h3> {{ $pageTitle }} <small> {{ $pageNote }} </small></h3>
-        <hr />       
+         
     </div>
 </div>
-<div class="container m-t">		
-<div class="table-responsive">    
+	
+<div class="table-container">    
     <table class="table table-striped table-bordered">
         <thead>
 			<tr>
@@ -54,5 +54,3 @@
 </div>  
 <div class="text-center"> {!! $pagination->render() !!}</div>
 
-
-</div> 
