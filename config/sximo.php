@@ -11,7 +11,7 @@ return [
 'cnf_multilang' 		=> '0',
 'cnf_lang' 			=> 'en',
 'cnf_regist' 			=> 'true',
-'cnf_front' 			=> 'true',
+'cnf_front' 			=> 'false',
 'cnf_recaptcha' 		=> 'false',
 'cnf_theme' 			=> 'default',
 'cnf_backend' 			=> 'minimal',
